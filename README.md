@@ -1,2 +1,12 @@
 # nav_buddy2
-A multi feature configurable navigation component for Phoenix LiveView and Elixir applications/systems.
+
+Permission-aware navigation system for Phoenix LiveView with support for:
+
+- Sidebar navigation
+- Horizontal navbar
+- Mobile drawer
+- Command palette (⌘K / Ctrl+K)
+- Heroicons
+- daisyUI
+
+🚧 Work in progress – demo app coming soon.

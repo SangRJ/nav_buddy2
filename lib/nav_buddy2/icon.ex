@@ -6,7 +6,7 @@ defmodule NavBuddy2.Icon do
 
   def icon(assigns) do
     ~H"""
-    <Heroicons.icon name={@name} class={@class} />
+    <%= apply(Heroicons, @name, [%{class: @class}]) %>
     """
   end
 end

@@ -19,6 +19,8 @@ defmodule NavBuddy2.Icon do
       """
     end
 
+    assigns = assign(assigns, :renderer, renderer)
+
     ~H"""
     <%= @renderer.(%{name: @name, class: @class}) %>
     """

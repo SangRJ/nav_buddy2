@@ -22,7 +22,6 @@ defmodule NavBuddy2.MixProject do
   defp deps do
     [
       {:phoenix_live_view, "~> 0.20"},
-      {:heroicons, "~> 0.5"},
       {:jason, "~> 1.4"}
     ]
   end

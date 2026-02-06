@@ -9,7 +9,7 @@ defmodule NavBuddy2.Permissions do
       is_nil(resolver) ->
         true
 
-      function_exported?(resolver, :can?, 2) ->
+      Code.ensure_loaded?(resolver) && function_exported?(resolver, :can?, 2) ->
         resolver.can?(user, permission)
 
       true ->

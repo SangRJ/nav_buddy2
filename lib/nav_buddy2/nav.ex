@@ -76,52 +76,12 @@ defmodule NavBuddy2.Nav do
     <div
       class={["nav-buddy2", @class]}
       x-data={"{ navLayout: $persist('#{@layout}').as('nav_buddy2_layout') }"}
+      x-cloak
       id="nav-buddy2-root"
     >
       <%!-- Sidebar layout --%>
-      <div x-show="navLayout === 'sidebar'" x-cloak class="flex min-h-screen">
-        <IconRail.render
-          sidebars={@sidebars}
-          current_user={@current_user}
-          current_path={@current_path}
-          active_sidebar_id={@active_sidebar_id}
-          class={@rail_class}
-          logo={@logo}
-        />
-
-        <Sidebar.render
-          sidebars={@active_sidebars}
-          current_user={@current_user}
-          current_path={@current_path}
-          collapsed={@collapsed}
-          searchable={@searchable}
-          class={@sidebar_class}
-        />
-
-        <main class="flex-1 min-w-0">
-          <%= render_slot(@inner_block) %>
-        </main>
-      </div>
-
-      <%!-- Horizontal layout --%>
-      <div x-show="navLayout === 'horizontal'" x-cloak class="flex flex-col min-h-screen">
-        <Horizontal.render
-          sidebars={@sidebars}
-          current_user={@current_user}
-          current_path={@current_path}
-          class={@horizontal_class}
-          logo={@logo}
-        />
-
-        <main class="flex-1">
-          <%= render_slot(@inner_block) %>
-        </main>
-      </div>
-
-      <%!-- Auto layout: sidebar on lg+, horizontal + drawer on mobile --%>
-      <div x-show="navLayout === 'auto'" x-cloak>
-        <%!-- Desktop: sidebar layout --%>
-        <div class="hidden lg:flex min-h-screen">
+      <template x-if="navLayout === 'sidebar'">
+        <div class="flex min-h-screen">
           <IconRail.render
             sidebars={@sidebars}
             current_user={@current_user}
@@ -144,9 +104,11 @@ defmodule NavBuddy2.Nav do
             <%= render_slot(@inner_block) %>
           </main>
         </div>
+      </template>
 
-        <%!-- Mobile: horizontal + drawer --%>
-        <div class="lg:hidden flex flex-col min-h-screen">
+      <%!-- Horizontal layout --%>
+      <template x-if="navLayout === 'horizontal'">
+        <div class="flex flex-col min-h-screen">
           <Horizontal.render
             sidebars={@sidebars}
             current_user={@current_user}
@@ -159,7 +121,52 @@ defmodule NavBuddy2.Nav do
             <%= render_slot(@inner_block) %>
           </main>
         </div>
-      </div>
+      </template>
+
+      <%!-- Auto layout: sidebar on lg+, horizontal + drawer on mobile --%>
+      <template x-if="navLayout === 'auto'">
+        <div>
+          <%!-- Desktop: sidebar layout --%>
+          <div class="hidden lg:flex min-h-screen">
+            <IconRail.render
+              sidebars={@sidebars}
+              current_user={@current_user}
+              current_path={@current_path}
+              active_sidebar_id={@active_sidebar_id}
+              class={@rail_class}
+              logo={@logo}
+            />
+
+            <Sidebar.render
+              sidebars={@active_sidebars}
+              current_user={@current_user}
+              current_path={@current_path}
+              collapsed={@collapsed}
+              searchable={@searchable}
+              class={@sidebar_class}
+            />
+
+            <main class="flex-1 min-w-0">
+              <%= render_slot(@inner_block) %>
+            </main>
+          </div>
+
+          <%!-- Mobile: horizontal + drawer --%>
+          <div class="lg:hidden flex flex-col min-h-screen">
+            <Horizontal.render
+              sidebars={@sidebars}
+              current_user={@current_user}
+              current_path={@current_path}
+              class={@horizontal_class}
+              logo={@logo}
+            />
+
+            <main class="flex-1">
+              <%= render_slot(@inner_block) %>
+            </main>
+          </div>
+        </div>
+      </template>
 
       <%!-- Mobile drawer (always rendered for hamburger trigger) --%>
       <MobileDrawer.render

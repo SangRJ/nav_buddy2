@@ -33,7 +33,7 @@ defmodule NavBuddy2.Renderer.IconRail do
 
     ~H"""
     <aside class={[
-      "w-16 bg-base-100 border-r border-base-300 flex flex-col items-center py-4 gap-2 shrink-0",
+      "w-16 bg-base-100 border-r border-base-300 flex flex-col items-center py-4 gap-2 shrink-0 sticky top-0 h-screen",
       @class
     ]}>
       <%!-- Logo area --%>

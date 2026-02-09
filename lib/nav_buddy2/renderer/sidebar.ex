@@ -45,7 +45,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
       }"}
       x-init="$watch('collapsed', val => $dispatch('nav-buddy2:sidebar-collapsed', { collapsed: val }))"
       class={[
-        "bg-base-100 border-r border-base-300 flex flex-col shrink-0 overflow-hidden transition-all duration-300 ease-out",
+        "bg-base-100 border-r border-base-300 flex flex-col shrink-0 overflow-hidden transition-all duration-300 ease-out sticky top-0 h-screen",
         @class
       ]}
       x-bind:class="collapsed ? 'w-16' : 'w-72'"

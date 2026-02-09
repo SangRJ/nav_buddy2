@@ -7,20 +7,25 @@ defmodule NavBuddy2.Icon do
 
   ## Configuration
 
+  For Phoenix 1.7+ with Heroicons (the default), you can directly use CoreComponents.icon:
+
       # config/config.exs
       config :nav_buddy2, icon_renderer: &MyAppWeb.CoreComponents.icon/1
 
-  ## Heroicons example (Phoenix 1.7+ default)
+  NavBuddy2 automatically converts icon atom names like `:cog_6_tooth` to
+  heroicons-compatible format like `"hero-cog-6-tooth"`.
 
-      # The renderer receives %{name: :home, class: "w-5 h-5"}
-      # and should return a HEEx template rendering that icon.
+  ## Custom Icon Systems
+
+  For other icon systems, provide a renderer function that accepts a map with
+  `:name` (string) and `:class` keys:
 
       defmodule MyAppWeb.NavIcon do
         use Phoenix.Component
 
         def render(assigns) do
           ~H\"\"\"
-          <.icon name={"hero-\#{@name}"} class={@class} />
+          <MyIconSystem.icon name={@name} class={@class} />
           \"\"\"
         end
       end
@@ -30,7 +35,7 @@ defmodule NavBuddy2.Icon do
 
   use Phoenix.Component
 
-  attr(:name, :atom, required: true, doc: "Icon name atom")
+  attr(:name, :atom, required: true, doc: "Icon name atom (e.g., :home, :cog_6_tooth)")
   attr(:class, :string, default: "w-5 h-5", doc: "CSS classes for the icon")
   attr(:rest, :global)
 
@@ -44,16 +49,27 @@ defmodule NavBuddy2.Icon do
       Add to your config/config.exs:
 
           config :nav_buddy2,
-            icon_renderer: &MyAppWeb.NavIcon.render/1
+            icon_renderer: &MyAppWeb.CoreComponents.icon/1
 
-      Your renderer function should accept a map with :name and :class keys.
+      For Phoenix 1.7+ with Heroicons, CoreComponents.icon works directly.
       """
     end
 
-    assigns = assign(assigns, :renderer, renderer)
+    # Convert atom name to heroicons-compatible string format
+    # :cog_6_tooth -> "hero-cog-6-tooth"
+    icon_name =
+      assigns.name
+      |> to_string()
+      |> String.replace("_", "-")
+      |> then(&("hero-" <> &1))
+
+    assigns =
+      assigns
+      |> assign(:renderer, renderer)
+      |> assign(:icon_name, icon_name)
 
     ~H"""
-    <%= @renderer.(%{name: @name, class: @class}) %>
+    <%= @renderer.(%{name: @icon_name, class: @class}) %>
     """
   end
 end

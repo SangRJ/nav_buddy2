@@ -71,6 +71,7 @@ export default function NavBuddy2Plugin(Alpine) {
   // Navigation store – tracks current path client-side (no re-renders!)
   // ---------------------------------------------------------------------------
   Alpine.store("nav", {
+    layout: Alpine.$persist("sidebar").as("nav_buddy2_layout"),
     currentPath: window.location.pathname,
     activeSidebarId: null,
     

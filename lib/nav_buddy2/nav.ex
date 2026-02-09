@@ -75,13 +75,13 @@ defmodule NavBuddy2.Nav do
     ~H"""
     <div
       class={["nav-buddy2", @class]}
-      x-data={"{ navLayout: $persist('#{@layout}').as('nav_buddy2_layout') }"}
+      x-data
       x-cloak
       id="nav-buddy2-root"
       phx-update="ignore"
     >
       <%!-- Sidebar layout --%>
-      <template x-if="navLayout === 'sidebar'">
+      <template x-if="$store.nav.layout === 'sidebar'">
         <div class="flex min-h-screen">
           <IconRail.render
             sidebars={@sidebars}
@@ -108,7 +108,7 @@ defmodule NavBuddy2.Nav do
       </template>
 
       <%!-- Horizontal layout --%>
-      <template x-if="navLayout === 'horizontal'">
+      <template x-if="$store.nav.layout === 'horizontal'">
         <div class="flex flex-col min-h-screen">
           <Horizontal.render
             sidebars={@sidebars}
@@ -125,7 +125,7 @@ defmodule NavBuddy2.Nav do
       </template>
 
       <%!-- Auto layout: sidebar on lg+, horizontal + drawer on mobile --%>
-      <template x-if="navLayout === 'auto'">
+      <template x-if="$store.nav.layout === 'auto'">
         <div>
           <%!-- Desktop: sidebar layout --%>
           <div class="hidden lg:flex min-h-screen">
@@ -210,54 +210,51 @@ defmodule NavBuddy2.Nav do
           </svg>
         </button>
 
-        <div
-          x-show="showMenu"
-          x-transition
-          x-on:click.outside="showMenu = false"
-          class="menu bg-base-200 rounded-box w-52 p-2 shadow-lg mb-2 border border-base-300"
-          style="display: none;"
-        >
-          <li>
-            <button
-              type="button"
-              x-on:click="navLayout = 'sidebar'; showMenu = false"
-              x-bind:class="navLayout === 'sidebar' ? 'active' : ''"
-              class="flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm8 0a1 1 0 011-1h4a1 1 0 011 1v12a1 1 0 01-1 1h-4a1 1 0 01-1-1V4z" clip-rule="evenodd" />
-              </svg>
-              <span>Sidebar</span>
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              x-on:click="navLayout = 'horizontal'; showMenu = false"
-              x-bind:class="navLayout === 'horizontal' ? 'active' : ''"
-              class="flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z" clip-rule="evenodd" />
-              </svg>
-              <span>Horizontal</span>
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              x-on:click="navLayout = 'auto'; showMenu = false"
-              x-bind:class="navLayout === 'auto' ? 'active' : ''"
-              class="flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-              </svg>
-              <span>Auto (responsive)</span>
-            </button>
-          </li>
-        </div>
+      <div
+        class="menu bg-base-200 rounded-box w-52 p-2 shadow-lg mb-2 border border-base-300"
+        style="display: none;"
+      >
+        <li>
+          <button
+            type="button"
+            x-on:click="$store.nav.layout = 'sidebar'; showMenu = false"
+            x-bind:class="$store.nav.layout === 'sidebar' ? 'active' : ''"
+            class="flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm8 0a1 1 0 011-1h4a1 1 0 011 1v12a1 1 0 01-1 1h-4a1 1 0 01-1-1V4z" clip-rule="evenodd" />
+            </svg>
+            <span>Sidebar</span>
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            x-on:click="$store.nav.layout = 'horizontal'; showMenu = false"
+            x-bind:class="$store.nav.layout === 'horizontal' ? 'active' : ''"
+            class="flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z" clip-rule="evenodd" />
+            </svg>
+            <span>Horizontal</span>
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            x-on:click="$store.nav.layout = 'auto'; showMenu = false"
+            x-bind:class="$store.nav.layout === 'auto' ? 'active' : ''"
+            class="flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+            </svg>
+            <span>Auto (responsive)</span>
+          </button>
+        </li>
       </div>
+    </div>
     </div>
     """
   end

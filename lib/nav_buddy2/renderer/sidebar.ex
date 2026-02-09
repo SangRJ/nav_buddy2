@@ -3,20 +3,23 @@ defmodule NavBuddy2.Renderer.Sidebar do
   Renders the Level 2+3 detail sidebar panel.
 
   This is the collapsible sidebar that displays sections and items
-  for the currently active icon rail entry. Mirrors the React
-  `DetailSidebar` component with:
+  for the currently active icon rail entry. Features:
 
-    - Collapsible width (w-64 → w-16) with smooth transitions
+    - Collapsible width (w-72 → w-16) with smooth soft-spring transitions
     - Section headings that hide when collapsed
     - Expandable/collapsible menu items with children
     - Search input
-    - daisyUI theming
-    - Alpine.js animations (no LiveView re-renders for UI state)
+    - daisyUI theming (adapts to any theme)
+    - Client-side active state tracking (no re-renders on navigation!)
+    - Alpine.js animations
   """
 
   use Phoenix.Component
 
-  alias NavBuddy2.{Resolver, Active, Icon}
+  alias NavBuddy2.{Resolver, Icon}
+  alias Jason
+
+
 
   attr(:sidebars, :list,
     required: true,
@@ -24,7 +27,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
   )
 
   attr(:current_user, :any, required: true, doc: "Current user for permission filtering")
-  attr(:current_path, :string, required: true, doc: "Current route path")
+  attr(:current_path, :string, required: true, doc: "Current route path (used for initial render only)")
   attr(:collapsed, :boolean, default: false, doc: "Initial collapsed state")
   attr(:searchable, :boolean, default: true, doc: "Show search input")
   attr(:class, :string, default: "", doc: "Additional CSS classes")
@@ -45,10 +48,11 @@ defmodule NavBuddy2.Renderer.Sidebar do
       }"}
       x-init="$watch('collapsed', val => $dispatch('nav-buddy2:sidebar-collapsed', { collapsed: val }))"
       class={[
-        "bg-base-100 border-r border-base-300 flex flex-col shrink-0 overflow-hidden transition-all duration-300 ease-out sticky top-0 h-screen",
+        "bg-base-100 border-r border-base-300 flex flex-col shrink-0 overflow-hidden sticky top-0 h-screen rounded-r-2xl",
         @class
       ]}
       x-bind:class="collapsed ? 'w-16' : 'w-72'"
+      style="transition: width 500ms cubic-bezier(0.25, 1.1, 0.4, 1)"
     >
       <%= for sidebar <- @sidebars do %>
         <%!-- Header with title and collapse toggle --%>
@@ -77,6 +81,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
             <span
               class="transition-transform duration-300"
               x-bind:class="collapsed ? 'rotate-180' : ''"
+              style="transition-timing-function: cubic-bezier(0.25, 1.1, 0.4, 1)"
             >
               <Icon.icon name={:chevron_left} class="w-4 h-4" />
             </span>
@@ -94,7 +99,6 @@ defmodule NavBuddy2.Renderer.Sidebar do
             <.section
               section={section}
               section_idx={section_idx}
-              current_path={@current_path}
               sidebar_id={sidebar.id}
             />
           <% end %>
@@ -111,7 +115,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
   defp search_input(assigns) do
     ~H"""
     <div
-      class="px-2 pb-2 shrink-0 transition-all duration-300"
+      class="px-2 pb-2 shrink-0"
       x-show="!collapsed"
       x-transition:enter="transition ease-out duration-200 delay-75"
       x-transition:enter-start="opacity-0"
@@ -139,7 +143,6 @@ defmodule NavBuddy2.Renderer.Sidebar do
 
   attr(:section, :any, required: true)
   attr(:section_idx, :integer, required: true)
-  attr(:current_path, :string, required: true)
   attr(:sidebar_id, :any, required: true)
 
   defp section(assigns) do
@@ -169,7 +172,6 @@ defmodule NavBuddy2.Renderer.Sidebar do
           <.nav_item
             item={item}
             item_key={"#{@sidebar_id}-#{@section_idx}-#{item_idx}"}
-            current_path={@current_path}
           />
         <% end %>
       </div>
@@ -178,35 +180,47 @@ defmodule NavBuddy2.Renderer.Sidebar do
   end
 
   # ---------------------------------------------------------------------------
-  # Nav Item (Level 3)
+  # Nav Item (Level 3) - Uses client-side active tracking
   # ---------------------------------------------------------------------------
 
   attr(:item, :any, required: true)
   attr(:item_key, :string, required: true)
-  attr(:current_path, :string, required: true)
 
   defp nav_item(assigns) do
-    active? = Active.active?(assigns.item, assigns.current_path)
     has_children? = assigns.item.children != []
+    # Collect child paths for parent active detection
+    child_paths = if has_children?, do: Enum.map(assigns.item.children, & &1.to) |> Enum.filter(& &1), else: []
 
     assigns =
       assigns
-      |> assign(:active?, active?)
       |> assign(:has_children?, has_children?)
+      |> assign(:child_paths, child_paths)
+      |> assign(:item_path, assigns.item.to)
+      |> assign(:exact, assigns.item[:exact] || false)
 
     ~H"""
     <div
-      x-data={"{ get isOpen() { return expanded.has('#{@item_key}') } }"}
+      x-data={"{
+        get isOpen() { return expanded.has('#{@item_key}') },
+        get isActive() {
+          #{if @item_path do "return $store.nav.isActive('#{@item_path}', #{@exact})" else "return false" end}
+        },
+        get isChildActive() {
+          #{if @child_paths != [] do "return $store.nav.isChildActive(#{Jason.encode!(@child_paths)})" else "return false" end}
+        }
+      }"}
       x-show={"search === '' || '#{String.downcase(@item.label)}'.includes(search.toLowerCase())"}
     >
       <%!-- Parent item row --%>
       <div
-        class={[
-          "group flex items-center gap-3 rounded-lg cursor-pointer select-none transition-all duration-200",
-          @active? && "bg-primary/10 text-primary",
-          !@active? && "text-base-content hover:bg-base-200"
-        ]}
-        x-bind:class="collapsed ? 'justify-center p-2' : 'px-3 py-2'"
+        class="group flex items-center gap-3 rounded-lg cursor-pointer select-none transition-all duration-300"
+        x-bind:class="{
+          'justify-center p-2': collapsed,
+          'px-3 py-2': !collapsed,
+          'bg-primary/10 text-primary': isActive || isChildActive,
+          'text-base-content hover:bg-base-200': !isActive && !isChildActive
+        }"
+        style="transition-timing-function: cubic-bezier(0.25, 1.1, 0.4, 1)"
       >
         <%= if @item.to do %>
           <.link
@@ -214,7 +228,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
             class="flex items-center gap-3 w-full min-w-0"
             {if @item.target, do: [target: @item.target], else: []}
           >
-            <.item_content item={@item} active?={@active?} has_children?={@has_children?} item_key={@item_key} />
+            <.item_content item={@item} has_children?={@has_children?} item_key={@item_key} />
           </.link>
         <% else %>
           <div
@@ -228,7 +242,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
               expanded = new Set(expanded);
             "}
           >
-            <.item_content item={@item} active?={@active?} has_children?={@has_children?} item_key={@item_key} />
+            <.item_content item={@item} has_children?={@has_children?} item_key={@item_key} />
           </div>
         <% end %>
       </div>
@@ -241,7 +255,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
           class="ml-4 mt-0.5 space-y-0.5 border-l-2 border-base-300 pl-3"
         >
           <%= for child <- @item.children do %>
-            <.child_item child={child} current_path={@current_path} />
+            <.child_item child={child} />
           <% end %>
         </div>
       <% end %>
@@ -250,7 +264,6 @@ defmodule NavBuddy2.Renderer.Sidebar do
   end
 
   attr(:item, :any, required: true)
-  attr(:active?, :boolean, required: true)
   attr(:has_children?, :boolean, required: true)
   attr(:item_key, :string, required: true)
 
@@ -259,11 +272,11 @@ defmodule NavBuddy2.Renderer.Sidebar do
     <%!-- Icon --%>
     <%= if @item.icon do %>
       <span class="shrink-0">
-        <Icon.icon name={@item.icon} class={
-          if @active?,
-            do: "w-5 h-5 transition-colors duration-200 text-primary",
-            else: "w-5 h-5 transition-colors duration-200 text-base-content/70 group-hover:text-base-content"
-        } />
+        <Icon.icon
+          name={@item.icon}
+          class="w-5 h-5 transition-colors duration-200"
+          x-bind:class="isActive || isChildActive ? 'text-primary' : 'text-base-content/70 group-hover:text-base-content'"
+        />
       </span>
     <% end %>
 
@@ -305,29 +318,32 @@ defmodule NavBuddy2.Renderer.Sidebar do
   end
 
   # ---------------------------------------------------------------------------
-  # Child Item (deepest level)
+  # Child Item (deepest level) - Uses client-side active tracking
   # ---------------------------------------------------------------------------
 
   attr(:child, :any, required: true)
-  attr(:current_path, :string, required: true)
 
   defp child_item(assigns) do
-    active? = Active.active?(assigns.child, assigns.current_path)
-    assigns = assign(assigns, :active?, active?)
+    exact = assigns.child[:exact] || false
+    assigns = assign(assigns, :exact, exact)
 
     ~H"""
-    <div>
+    <div
+      x-data={"{
+        get isActive() {
+          #{if @child.to do "return $store.nav.isActive('#{@child.to}', #{@exact})" else "return false" end}
+        }
+      }"}
+    >
       <%= if @child.to do %>
-        <.link
-          navigate={@child.to}
-          class={[
-            "block px-3 py-1.5 rounded-md text-sm transition-colors duration-200",
-            @active? && "bg-primary/10 text-primary font-medium",
-            !@active? && "text-base-content/70 hover:bg-base-200 hover:text-base-content"
-          ]}
-        >
-          <%= @child.label %>
-        </.link>
+        <div x-bind:class="isActive ? 'bg-primary/10 text-primary font-medium' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content'" class="rounded-md transition-colors duration-200">
+          <.link
+            navigate={@child.to}
+            class="block px-3 py-1.5 rounded-md text-sm text-inherit"
+          >
+            <%= @child.label %>
+          </.link>
+        </div>
       <% else %>
         <span class="block px-3 py-1.5 text-sm text-base-content/70">
           <%= @child.label %>

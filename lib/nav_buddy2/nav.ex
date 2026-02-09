@@ -78,6 +78,7 @@ defmodule NavBuddy2.Nav do
       x-data={"{ navLayout: $persist('#{@layout}').as('nav_buddy2_layout') }"}
       x-cloak
       id="nav-buddy2-root"
+      phx-update="ignore"
     >
       <%!-- Sidebar layout --%>
       <template x-if="navLayout === 'sidebar'">

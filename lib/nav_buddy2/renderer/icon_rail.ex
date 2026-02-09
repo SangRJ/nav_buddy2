@@ -33,7 +33,7 @@ defmodule NavBuddy2.Renderer.IconRail do
 
     ~H"""
     <aside class={[
-      "w-16 bg-base-100 border-r border-base-300 flex flex-col items-center py-4 gap-2 shrink-0 sticky top-0 h-screen",
+      "w-16 bg-base-100 border-r border-base-300 flex flex-col items-center py-4 gap-2 shrink-0 sticky top-0 h-screen rounded-l-2xl z-20",
       @class
     ]}>
       <%!-- Logo area --%>
@@ -52,7 +52,7 @@ defmodule NavBuddy2.Renderer.IconRail do
         <%= for sidebar <- @top_items do %>
           <.rail_button
             sidebar={sidebar}
-            active={sidebar.id == @active_sidebar_id}
+            active_sidebar_id={@active_sidebar_id}
           />
         <% end %>
       </div>
@@ -65,7 +65,7 @@ defmodule NavBuddy2.Renderer.IconRail do
         <%= for sidebar <- @bottom_items do %>
           <.rail_button
             sidebar={sidebar}
-            active={sidebar.id == @active_sidebar_id}
+            active_sidebar_id={@active_sidebar_id}
           />
         <% end %>
       </div>
@@ -81,20 +81,27 @@ defmodule NavBuddy2.Renderer.IconRail do
   end
 
   attr(:sidebar, :any, required: true)
-  attr(:active, :boolean, required: true)
+  attr(:active_sidebar_id, :any, required: true)
 
   defp rail_button(assigns) do
+    # Check if this sidebar is active (server-side initial state)
+    active_initial = assigns.sidebar.id == assigns.active_sidebar_id
+
+    assigns = assign(assigns, :active_initial, active_initial)
+
     ~H"""
-    <div class="tooltip tooltip-right" data-tip={@sidebar.title}>
+    <div class="tooltip tooltip-right z-50" data-tip={@sidebar.title}>
       <button
         type="button"
-        class={[
-          "w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200",
-          @active && "bg-primary text-primary-content shadow-sm",
-          !@active && "text-base-content/60 hover:bg-base-200 hover:text-base-content"
-        ]}
+        class="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300"
+        x-data
+        x-bind:class="{
+          'bg-primary text-primary-content shadow-sm': $store.nav.activeSidebarId === '#{@sidebar.id}' || ($store.nav.activeSidebarId === null && #{@active_initial}),
+          'text-base-content/60 hover:bg-base-200 hover:text-base-content': $store.nav.activeSidebarId !== '#{@sidebar.id}' && !($store.nav.activeSidebarId === null && #{@active_initial})
+        }"
         phx-click="nav_buddy2:switch_sidebar"
         phx-value-id={@sidebar.id}
+        x-on:click="$store.nav.activeSidebarId = '#{@sidebar.id}'"
       >
         <Icon.icon name={@sidebar.icon} class="w-5 h-5" />
       </button>

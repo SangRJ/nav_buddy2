@@ -4,6 +4,7 @@
  * Provides:
  *   - Layout persistence (sidebar / horizontal) via localStorage
  *   - Sidebar collapsed state persistence
+ *   - Client-side active navigation tracking (no re-renders)
  *   - Alpine x-collapse directive (if not already registered)
  *   - Custom event helpers
  *
@@ -15,6 +16,9 @@
  */
 
 const NAV_BUDDY2_STORAGE_KEY = "nav_buddy2_preferences";
+
+// Soft spring easing for smooth animations
+const SOFT_SPRING_EASING = "cubic-bezier(0.25, 1.1, 0.4, 1)";
 
 function getPreferences() {
   try {
@@ -36,9 +40,70 @@ function setPreference(key, value) {
 }
 
 /**
+ * Normalize path for comparison (remove trailing slashes)
+ */
+function normalizePath(path) {
+  if (!path) return "/";
+  return path.replace(/\/+$/, "") || "/";
+}
+
+/**
+ * Check if a path is active (exact or prefix match)
+ */
+function isPathActive(itemPath, currentPath, exact = false) {
+  const normalized = normalizePath(currentPath);
+  const itemNormalized = normalizePath(itemPath);
+  
+  if (exact) {
+    return normalized === itemNormalized;
+  }
+  
+  // Prefix match: /projects matches /projects/123
+  if (normalized === itemNormalized) return true;
+  return normalized.startsWith(itemNormalized + "/");
+}
+
+/**
  * Alpine.js plugin
  */
 export default function NavBuddy2Plugin(Alpine) {
+  // ---------------------------------------------------------------------------
+  // Navigation store – tracks current path client-side (no re-renders!)
+  // ---------------------------------------------------------------------------
+  Alpine.store("nav", {
+    currentPath: window.location.pathname,
+    activeSidebarId: null,
+    
+    /**
+     * Check if a path is active
+     * @param {string} path - The path to check
+     * @param {boolean} exact - If true, require exact match
+     */
+    isActive(path, exact = false) {
+      return isPathActive(path, this.currentPath, exact);
+    },
+    
+    /**
+     * Check if any child path is active (for parent items)
+     * @param {string[]} childPaths - Array of child paths
+     */
+    isChildActive(childPaths) {
+      return childPaths.some(path => this.isActive(path));
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Watch for LiveView navigation and update current path
+  // ---------------------------------------------------------------------------
+  document.addEventListener("phx:page-loading-stop", () => {
+    Alpine.store("nav").currentPath = window.location.pathname;
+  });
+
+  // Also handle popstate for browser back/forward
+  window.addEventListener("popstate", () => {
+    Alpine.store("nav").currentPath = window.location.pathname;
+  });
+
   // ---------------------------------------------------------------------------
   // $navBuddy2 magic – access persisted preferences anywhere
   // ---------------------------------------------------------------------------
@@ -55,6 +120,8 @@ export default function NavBuddy2Plugin(Alpine) {
     set sidebarCollapsed(val) {
       setPreference("sidebarCollapsed", val);
     },
+    // Expose easing for use in inline styles
+    easing: SOFT_SPRING_EASING,
   }));
 
   // ---------------------------------------------------------------------------
@@ -80,17 +147,17 @@ export default function NavBuddy2Plugin(Alpine) {
 
   // ---------------------------------------------------------------------------
   // x-collapse directive (borrowed from @alpinejs/collapse if not present)
-  // Provides smooth accordion expand/collapse behavior
+  // Provides smooth accordion expand/collapse behavior with soft spring easing
   // ---------------------------------------------------------------------------
   if (!Alpine.directive("collapse")) {
     Alpine.directive("collapse", (el, { modifiers }, { cleanup }) => {
       const duration = modifiers.includes("duration")
-        ? modifiers[modifiers.indexOf("duration") + 1] || "200"
-        : "200";
+        ? modifiers[modifiers.indexOf("duration") + 1] || "300"
+        : "300";
 
-      // Set initial styles
+      // Set initial styles with soft spring easing
       el.style.overflow = "hidden";
-      el.style.transition = `height ${duration}ms cubic-bezier(0.25, 1.1, 0.4, 1)`;
+      el.style.transition = `height ${duration}ms ${SOFT_SPRING_EASING}`;
 
       const setHeight = () => {
         el.style.height = el.scrollHeight + "px";
@@ -156,3 +223,6 @@ export const NavBuddy2Hook = {
     });
   },
 };
+
+// Export utilities for external use
+export { SOFT_SPRING_EASING, isPathActive, normalizePath };

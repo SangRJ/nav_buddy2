@@ -17,7 +17,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
   use Phoenix.Component
 
   alias NavBuddy2.{Resolver, Icon}
-  alias Jason
+
 
 
 
@@ -206,7 +206,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
           #{if @item_path do "return $store.nav.isActive('#{@item_path}', #{@exact})" else "return false" end}
         },
         get isChildActive() {
-          #{if @child_paths != [] do "return $store.nav.isChildActive(#{Jason.encode!(@child_paths)})" else "return false" end}
+          #{if @child_paths != [] do "return $store.nav.isChildActive(['#{Enum.join(@child_paths, "','")}'])" else "return false" end}
         }
       }"}
       x-show={"search === '' || '#{String.downcase(@item.label)}'.includes(search.toLowerCase())"}

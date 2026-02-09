@@ -69,7 +69,7 @@ defmodule NavBuddy2.Icon do
       |> assign(:icon_name, icon_name)
 
     ~H"""
-    <%= @renderer.(%{name: @icon_name, class: @class}) %>
+    <%= @renderer.(Map.merge(@rest, %{name: @icon_name, class: @class})) %>
     """
   end
 end

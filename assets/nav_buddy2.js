@@ -71,9 +71,33 @@ export default function NavBuddy2Plugin(Alpine) {
   // Navigation store – tracks current path client-side (no re-renders!)
   // ---------------------------------------------------------------------------
   Alpine.store("nav", {
-    layout: Alpine.$persist("sidebar").as("nav_buddy2_layout"),
+    layout: "sidebar", // Default state
     currentPath: window.location.pathname,
     activeSidebarId: null,
+
+    init() {
+      // Initialize persistence if plugin is available
+      if (Alpine.$persist) {
+        this.layout = Alpine.$persist("sidebar").as("nav_buddy2_layout");
+      } else {
+        console.warn("NavBuddy2: Alpine.$persist not loaded. Layout preference will not persist.");
+      }
+
+      console.log("NavBuddy2: Initialized. Layout:", this.layout);
+
+      // Watch for layout changes and dispatch event for LiveView hook
+      Alpine.effect(() => {
+        const root = document.getElementById("nav-buddy2-root");
+        if (root) {
+          root.dispatchEvent(
+            new CustomEvent("nav-buddy2:layout-changed", {
+              detail: { layout: this.layout },
+              bubbles: true,
+            })
+          );
+        }
+      });
+    },
     
     /**
      * Check if a path is active

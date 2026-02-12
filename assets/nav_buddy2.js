@@ -71,15 +71,12 @@ export default function NavBuddy2Plugin(Alpine) {
   // Navigation store – tracks current path client-side (no re-renders!)
   // ---------------------------------------------------------------------------
   Alpine.store("nav", {
-    layout: "sidebar", // Default state
+    layout: Alpine.$persist ? Alpine.$persist("sidebar").as("nav_buddy2_layout") : "sidebar", // Default state
     currentPath: window.location.pathname,
     activeSidebarId: null,
 
     init() {
-      // Initialize persistence if plugin is available
-      if (Alpine.$persist) {
-        this.layout = Alpine.$persist("sidebar").as("nav_buddy2_layout");
-      } else {
+      if (!Alpine.$persist) {
         console.warn("NavBuddy2: Alpine.$persist not loaded. Layout preference will not persist.");
       }
 

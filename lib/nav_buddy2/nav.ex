@@ -197,6 +197,7 @@ defmodule NavBuddy2.Nav do
     <div
       class="fixed bottom-4 right-4 z-30"
       x-data="{ showMenu: false }"
+      x-on:click.outside="showMenu = false"
     >
       <div class="dropdown dropdown-top dropdown-end">
         <button
@@ -212,7 +213,13 @@ defmodule NavBuddy2.Nav do
 
       <div
         class="menu bg-base-200 rounded-box w-52 p-2 shadow-lg mb-2 border border-base-300"
-        style="display: none;"
+        x-show="showMenu"
+        x-transition:enter="transition ease-out duration-100"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-75"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
       >
         <li>
           <button

@@ -36,7 +36,7 @@ defmodule NavBuddy2.Icon do
   use Phoenix.Component
 
   attr(:name, :atom, required: true, doc: "Icon name atom (e.g., :home, :cog_6_tooth)")
-  attr(:class, :string, default: "w-5 h-5", doc: "CSS classes for the icon")
+  attr(:"x-bind:class", :string, default: nil, doc: "Alpine.js class binding")
   attr(:rest, :global)
 
   def icon(assigns) do
@@ -63,13 +63,22 @@ defmodule NavBuddy2.Icon do
       |> String.replace("_", "-")
       |> then(&("hero-" <> &1))
 
+    # Re-combine x-bind:class into the attributes if it exists
+    extra_opts =
+      if assigns[:"x-bind:class"] do
+        %{"x-bind:class" => assigns[:"x-bind:class"]}
+      else
+        %{}
+      end
+
     assigns =
       assigns
       |> assign(:renderer, renderer)
       |> assign(:icon_name, icon_name)
+      |> assign(:extra_opts, extra_opts)
 
     ~H"""
-    <%= @renderer.(Map.merge(@rest, %{name: @icon_name, class: @class})) %>
+    <%= @renderer.(Map.merge(@rest, Map.merge(%{name: @icon_name, class: @class}, @extra_opts))) %>
     """
   end
 end

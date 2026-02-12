@@ -196,7 +196,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
       |> assign(:has_children?, has_children?)
       |> assign(:child_paths, child_paths)
       |> assign(:item_path, assigns.item.to)
-      |> assign(:exact, assigns.item[:exact] || false)
+      |> assign(:exact, assigns.item.exact || false)
 
     ~H"""
     <div
@@ -324,7 +324,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
   attr(:child, :any, required: true)
 
   defp child_item(assigns) do
-    exact = assigns.child[:exact] || false
+    exact = assigns.child.exact || false
     assigns = assign(assigns, :exact, exact)
 
     ~H"""

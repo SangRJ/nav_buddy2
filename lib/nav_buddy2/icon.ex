@@ -36,6 +36,7 @@ defmodule NavBuddy2.Icon do
   use Phoenix.Component
 
   attr(:name, :atom, required: true, doc: "Icon name atom (e.g., :home, :cog_6_tooth)")
+  attr(:class, :string, default: "w-5 h-5", doc: "CSS classes for the icon")
   attr(:"x-bind:class", :string, default: nil, doc: "Alpine.js class binding")
   attr(:rest, :global)
 

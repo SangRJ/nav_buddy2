@@ -130,31 +130,49 @@ defmodule NavBuddy2.Renderer.Horizontal do
     assigns = assign(assigns, :active?, active?)
 
     ~H"""
-    <%= if @item.to do %>
-      <.link
-        navigate={@item.to}
-        class={[
-          "flex items-center gap-2",
-          @active? && "active"
-        ]}
-      >
-        <%= if @item.icon do %>
-          <Icon.icon name={@item.icon} class="w-4 h-4" />
-        <% end %>
-        <span><%= @item.label %></span>
-        <%= if @item.badge do %>
-          <span class={["badge badge-sm", @item.badge_class || "badge-ghost"]}>
-            <%= @item.badge %>
-          </span>
-        <% end %>
-      </.link>
+    <%= if @item.children != [] do %>
+      <details>
+        <summary class={[@active? && "text-primary"]}>
+          <%= if @item.icon do %>
+            <Icon.icon name={@item.icon} class="w-4 h-4" />
+          <% end %>
+          <span><%= @item.label %></span>
+        </summary>
+        <ul>
+          <%= for child <- @item.children do %>
+            <li>
+              <.horizontal_item item={child} current_path={@current_path} />
+            </li>
+          <% end %>
+        </ul>
+      </details>
     <% else %>
-      <span class="flex items-center gap-2">
-        <%= if @item.icon do %>
-          <Icon.icon name={@item.icon} class="w-4 h-4" />
-        <% end %>
-        <span><%= @item.label %></span>
-      </span>
+      <%= if @item.to do %>
+        <.link
+          navigate={@item.to}
+          class={[
+            "flex items-center gap-2",
+            @active? && "active"
+          ]}
+        >
+          <%= if @item.icon do %>
+            <Icon.icon name={@item.icon} class="w-4 h-4" />
+          <% end %>
+          <span><%= @item.label %></span>
+          <%= if @item.badge do %>
+            <span class={["badge badge-sm", @item.badge_class || "badge-ghost"]}>
+              <%= @item.badge %>
+            </span>
+          <% end %>
+        </.link>
+      <% else %>
+        <span class="flex items-center gap-2">
+          <%= if @item.icon do %>
+            <Icon.icon name={@item.icon} class="w-4 h-4" />
+          <% end %>
+          <span><%= @item.label %></span>
+        </span>
+      <% end %>
     <% end %>
     """
   end

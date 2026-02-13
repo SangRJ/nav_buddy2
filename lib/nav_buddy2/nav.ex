@@ -36,6 +36,7 @@ defmodule NavBuddy2.Nav do
   use Phoenix.Component
 
   alias NavBuddy2.Renderer.{IconRail, Sidebar, Horizontal, MobileDrawer, CommandPalette}
+  alias NavBuddy2.Active
 
   attr(:sidebars, :list, required: true, doc: "List of NavBuddy2.Sidebar structs")
   attr(:current_user, :any, required: true, doc: "Current user (passed to permission resolver)")
@@ -59,6 +60,7 @@ defmodule NavBuddy2.Nav do
   def nav(assigns) do
     active_id =
       assigns.active_sidebar_id ||
+        find_active_sidebar_id(assigns.sidebars, assigns.current_path) ||
         case assigns.sidebars do
           [first | _] -> first.id
           [] -> nil
@@ -78,7 +80,6 @@ defmodule NavBuddy2.Nav do
       x-data
       x-cloak
       id="nav-buddy2-root"
-      phx-update="ignore"
     >
       <%!-- Sidebar layout --%>
       <template x-if="$store.nav.layout === 'sidebar'">
@@ -264,5 +265,10 @@ defmodule NavBuddy2.Nav do
     </div>
     </div>
     """
+  end
+  defp find_active_sidebar_id(sidebars, current_path) do
+    Enum.find_value(sidebars, fn sidebar ->
+      if Active.sidebar_active?(sidebar, current_path), do: sidebar.id
+    end)
   end
 end

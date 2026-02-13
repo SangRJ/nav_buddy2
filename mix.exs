@@ -46,7 +46,8 @@ defmodule NavBuddy2.MixProject do
       links: %{
         "GitHub" => @source_url
       },
-      files: ~w(lib assets .formatter.exs mix.exs README.md LICENSE)
+      files: ~w(lib assets .formatter.exs mix.exs README.md LICENSE),
+      maintainers: ["Sang Rogers"]
     ]
   end
 

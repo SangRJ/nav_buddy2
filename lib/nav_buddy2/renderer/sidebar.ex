@@ -16,7 +16,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
 
   use Phoenix.Component
 
-  alias NavBuddy2.{Resolver, Icon}
+  alias NavBuddy2.{Resolver, Icon, Active}
 
 
 
@@ -100,6 +100,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
               section={section}
               section_idx={section_idx}
               sidebar_id={sidebar.id}
+              current_path={@current_path}
             />
           <% end %>
         </nav>
@@ -144,6 +145,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
   attr(:section, :any, required: true)
   attr(:section_idx, :integer, required: true)
   attr(:sidebar_id, :any, required: true)
+  attr(:current_path, :string, required: true)
 
   defp section(assigns) do
     ~H"""
@@ -172,6 +174,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
           <.nav_item
             item={item}
             item_key={"#{@sidebar_id}-#{@section_idx}-#{item_idx}"}
+            current_path={@current_path}
           />
         <% end %>
       </div>
@@ -185,41 +188,42 @@ defmodule NavBuddy2.Renderer.Sidebar do
 
   attr(:item, :any, required: true)
   attr(:item_key, :string, required: true)
+  attr(:current_path, :string, required: true)
 
   defp nav_item(assigns) do
     has_children? = assigns.item.children != []
-    # Collect child paths for parent active detection
-    child_paths = if has_children?, do: Enum.map(assigns.item.children, & &1.to) |> Enum.filter(& &1), else: []
+
+    # Calculate active state server-side
+    active? = Active.active?(assigns.item, assigns.current_path)
+
+    # Check if any child is active (for parent highlighting/expansion)
+    child_active? =
+      has_children? && Enum.any?(assigns.item.children, &Active.active?(&1, assigns.current_path))
 
     assigns =
       assigns
       |> assign(:has_children?, has_children?)
-      |> assign(:child_paths, child_paths)
+      |> assign(:active?, active?)
+      |> assign(:child_active?, child_active?)
       |> assign(:item_path, assigns.item.to)
-      |> assign(:exact, assigns.item.exact || false)
 
     ~H"""
     <div
       x-data={"{
-        get isOpen() { return expanded.has('#{@item_key}') },
-        get isActive() {
-          #{if @item_path do "return $store.nav.isActive('#{@item_path}', #{@exact})" else "return false" end}
-        },
-        get isChildActive() {
-          #{if @child_paths != [] do "return $store.nav.isChildActive(['#{Enum.join(@child_paths, "','")}'])" else "return false" end}
-        }
+        get isOpen() { return expanded.has('#{@item_key}') }
       }"}
-      x-effect="if (isChildActive) expanded.add('#{@item_key}')"
+      x-init={"if (#{@child_active?}) expanded.add('#{@item_key}')"}
       x-show={"search === '' || '#{String.downcase(@item.label)}'.includes(search.toLowerCase())"}
     >
       <%!-- Parent item row --%>
       <div
-        class="group flex items-center gap-3 rounded-lg cursor-pointer select-none transition-all duration-300"
+        class={[
+          "group flex items-center gap-3 rounded-lg cursor-pointer select-none transition-all duration-300",
+          if(@active? || @child_active?, do: "bg-primary/10 text-primary", else: "text-base-content hover:bg-base-200")
+        ]}
         x-bind:class="{
           'justify-center p-2': collapsed,
-          'px-3 py-2': !collapsed,
-          'bg-primary/10 text-primary': isActive || isChildActive,
-          'text-base-content hover:bg-base-200': !isActive && !isChildActive
+          'px-3 py-2': !collapsed
         }"
         style="transition-timing-function: cubic-bezier(0.25, 1.1, 0.4, 1)"
       >
@@ -229,7 +233,13 @@ defmodule NavBuddy2.Renderer.Sidebar do
             class="flex items-center gap-3 w-full min-w-0"
             {if @item.target, do: [target: @item.target], else: []}
           >
-            <.item_content item={@item} has_children?={@has_children?} item_key={@item_key} />
+            <.item_content
+              item={@item}
+              has_children?={@has_children?}
+              item_key={@item_key}
+              active?={@active?}
+              child_active?={@child_active?}
+            />
           </.link>
         <% else %>
           <div
@@ -243,7 +253,13 @@ defmodule NavBuddy2.Renderer.Sidebar do
               expanded = new Set(expanded);
             "}
           >
-            <.item_content item={@item} has_children?={@has_children?} item_key={@item_key} />
+            <.item_content
+              item={@item}
+              has_children?={@has_children?}
+              item_key={@item_key}
+              active?={@active?}
+              child_active?={@child_active?}
+            />
           </div>
         <% end %>
       </div>
@@ -256,7 +272,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
           class="ml-4 mt-0.5 space-y-0.5 border-l-2 border-base-300 pl-3"
         >
           <%= for child <- @item.children do %>
-            <.child_item child={child} />
+            <.child_item child={child} current_path={@current_path} />
           <% end %>
         </div>
       <% end %>
@@ -267,6 +283,8 @@ defmodule NavBuddy2.Renderer.Sidebar do
   attr(:item, :any, required: true)
   attr(:has_children?, :boolean, required: true)
   attr(:item_key, :string, required: true)
+  attr(:active?, :boolean, required: true)
+  attr(:child_active?, :boolean, required: true)
 
   defp item_content(assigns) do
     ~H"""
@@ -275,8 +293,10 @@ defmodule NavBuddy2.Renderer.Sidebar do
       <span class="shrink-0">
         <Icon.icon
           name={@item.icon}
-          class="w-5 h-5 transition-colors duration-200"
-          x-bind:class="isActive || isChildActive ? 'text-primary' : 'text-base-content/70 group-hover:text-base-content'"
+          class={[
+            "w-5 h-5 transition-colors duration-200",
+            if(@active? || @child_active?, do: "text-primary", else: "text-base-content/70 group-hover:text-base-content")
+          ]}
         />
       </span>
     <% end %>
@@ -319,25 +339,23 @@ defmodule NavBuddy2.Renderer.Sidebar do
   end
 
   # ---------------------------------------------------------------------------
-  # Child Item (deepest level) - Uses client-side active tracking
+  # Child Item (deepest level) - Uses server-side active tracking
   # ---------------------------------------------------------------------------
 
   attr(:child, :any, required: true)
+  attr(:current_path, :string, required: true)
 
   defp child_item(assigns) do
-    exact = assigns.child.exact || false
-    assigns = assign(assigns, :exact, exact)
+    active? = Active.active?(assigns.child, assigns.current_path)
+    assigns = assign(assigns, :active?, active?)
 
     ~H"""
-    <div
-      x-data={"{
-        get isActive() {
-          #{if @child.to do "return $store.nav.isActive('#{@child.to}', #{@exact})" else "return false" end}
-        }
-      }"}
-    >
+    <div>
       <%= if @child.to do %>
-        <div x-bind:class="isActive ? 'bg-primary/10 text-primary font-medium' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content'" class="rounded-md transition-colors duration-200">
+        <div class={[
+          "rounded-md transition-colors duration-200",
+          if(@active?, do: "bg-primary/10 text-primary font-medium", else: "text-base-content/70 hover:bg-base-200 hover:text-base-content")
+        ]}>
           <.link
             navigate={@child.to}
             class="block px-3 py-1.5 rounded-md text-sm text-inherit"

@@ -110,7 +110,7 @@ defmodule NavBuddy2.Renderer.Horizontal do
           type="button"
           class="btn btn-ghost btn-sm btn-square lg:hidden"
           x-data
-          x-on:click="$dispatch('nav-buddy2:toggle-mobile-drawer')"
+          x-on:click="$dispatch('nav-buddy2:toggle-mobile-drawer', {})"
         >
           <Icon.icon name={:menu} class="w-5 h-5" />
         </button>
@@ -153,8 +153,8 @@ defmodule NavBuddy2.Renderer.Horizontal do
         <.link
           navigate={@item.to}
           class={[
-            "flex items-center gap-2",
-            @active? && "active"
+            "flex items-center gap-2 px-3 py-2 rounded-lg transition-colors",
+            if(@active?, do: "bg-primary/10 text-primary", else: "hover:bg-base-200")
           ]}
         >
           <%= if @item.icon do %>
@@ -168,7 +168,7 @@ defmodule NavBuddy2.Renderer.Horizontal do
           <% end %>
         </.link>
       <% else %>
-        <span class="flex items-center gap-2">
+        <span class="flex items-center gap-2 px-3 py-2 rounded-lg text-base-content/70">
           <%= if @item.icon do %>
             <Icon.icon name={@item.icon} class="w-4 h-4" />
           <% end %>

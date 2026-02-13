@@ -209,6 +209,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
           #{if @child_paths != [] do "return $store.nav.isChildActive(['#{Enum.join(@child_paths, "','")}'])" else "return false" end}
         }
       }"}
+      x-effect="if (isChildActive) expanded.add('#{@item_key}')"
       x-show={"search === '' || '#{String.downcase(@item.label)}'.includes(search.toLowerCase())"}
     >
       <%!-- Parent item row --%>

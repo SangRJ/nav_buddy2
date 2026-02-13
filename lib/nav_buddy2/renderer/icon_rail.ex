@@ -11,7 +11,7 @@ defmodule NavBuddy2.Renderer.IconRail do
 
   use Phoenix.Component
 
-  alias NavBuddy2.{Resolver, Icon}
+  alias NavBuddy2.{Resolver, Icon, Active}
 
   attr(:sidebars, :list, required: true, doc: "Full list of NavBuddy2.Sidebar structs")
   attr(:current_user, :any, required: true, doc: "Current user for permission filtering")
@@ -53,6 +53,7 @@ defmodule NavBuddy2.Renderer.IconRail do
           <.rail_button
             sidebar={sidebar}
             active_sidebar_id={@active_sidebar_id}
+            current_path={@current_path}
           />
         <% end %>
       </div>
@@ -66,6 +67,7 @@ defmodule NavBuddy2.Renderer.IconRail do
           <.rail_button
             sidebar={sidebar}
             active_sidebar_id={@active_sidebar_id}
+            current_path={@current_path}
           />
         <% end %>
       </div>
@@ -82,12 +84,13 @@ defmodule NavBuddy2.Renderer.IconRail do
 
   attr(:sidebar, :any, required: true)
   attr(:active_sidebar_id, :any, required: true)
+  attr(:current_path, :string, required: true)
 
   defp rail_button(assigns) do
-    # Check if this sidebar is active (server-side initial state)
-    active_initial = assigns.sidebar.id == assigns.active_sidebar_id
+    # Check if this sidebar is active (visual state tracks URL, not just panel open state)
+    is_active = Active.sidebar_active?(assigns.sidebar, assigns.current_path)
 
-    assigns = assign(assigns, :active_initial, active_initial)
+    assigns = assign(assigns, :is_active, is_active)
 
     ~H"""
     <div class="tooltip tooltip-right z-50" data-tip={@sidebar.title}>
@@ -95,7 +98,7 @@ defmodule NavBuddy2.Renderer.IconRail do
         type="button"
         class={[
           "w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300",
-          if(@active_initial, do: "bg-primary text-primary-content shadow-sm", else: "text-base-content/60 hover:bg-base-200 hover:text-base-content")
+          if(@is_active, do: "bg-primary text-primary-content shadow-sm", else: "text-base-content/60 hover:bg-base-200 hover:text-base-content")
         ]}
         phx-click="nav_buddy2:switch_sidebar"
         phx-value-id={@sidebar.id}

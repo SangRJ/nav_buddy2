@@ -55,13 +55,15 @@ defmodule NavBuddy2.Renderer.Horizontal do
                 <details
                   x-data="{ open: false }"
                   x-bind:open="open"
-                  x-on:click="open = !open; $event.preventDefault()"
                   x-on:click.outside="open = false"
                 >
-                  <summary class={[
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors",
-                    Active.sidebar_active?(sidebar, @current_path) && "bg-primary/10 text-primary"
-                  ]}>
+                  <summary
+                    class={[
+                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors",
+                      Active.sidebar_active?(sidebar, @current_path) && "bg-primary/10 text-primary"
+                    ]}
+                    x-on:click="open = !open; $event.preventDefault()"
+                  >
                     <Icon.icon name={sidebar.icon} class="w-4 h-4" />
                     <span><%= sidebar.title %></span>
                   </summary>

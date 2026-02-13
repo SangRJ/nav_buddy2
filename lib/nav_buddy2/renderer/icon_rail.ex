@@ -93,15 +93,12 @@ defmodule NavBuddy2.Renderer.IconRail do
     <div class="tooltip tooltip-right z-50" data-tip={@sidebar.title}>
       <button
         type="button"
-        class="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300"
-        x-data
-        x-bind:class="{
-          'bg-primary text-primary-content shadow-sm': $store.nav.activeSidebarId === '#{@sidebar.id}' || ($store.nav.activeSidebarId === null && #{@active_initial}),
-          'text-base-content/60 hover:bg-base-200 hover:text-base-content': $store.nav.activeSidebarId !== '#{@sidebar.id}' && !($store.nav.activeSidebarId === null && #{@active_initial})
-        }"
+        class={[
+          "w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300",
+          if(@active_initial, do: "bg-primary text-primary-content shadow-sm", else: "text-base-content/60 hover:bg-base-200 hover:text-base-content")
+        ]}
         phx-click="nav_buddy2:switch_sidebar"
         phx-value-id={@sidebar.id}
-        x-on:click="$store.nav.activeSidebarId = '#{@sidebar.id}'"
       >
         <Icon.icon name={@sidebar.icon} class="w-5 h-5" />
       </button>

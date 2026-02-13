@@ -83,28 +83,46 @@ defmodule NavBuddy2.Nav do
     >
       <%!-- Sidebar layout --%>
       <template x-if="$store.nav.layout === 'sidebar'">
-        <div class="flex min-h-screen">
-          <IconRail.render
-            sidebars={@sidebars}
-            current_user={@current_user}
-            current_path={@current_path}
-            active_sidebar_id={@active_sidebar_id}
-            class={@rail_class}
-            logo={@logo}
-          />
+        <div>
+          <%!-- Desktop: sidebar layout --%>
+          <div class="hidden lg:flex min-h-screen">
+            <IconRail.render
+              sidebars={@sidebars}
+              current_user={@current_user}
+              current_path={@current_path}
+              active_sidebar_id={@active_sidebar_id}
+              class={@rail_class}
+              logo={@logo}
+            />
 
-          <Sidebar.render
-            sidebars={@active_sidebars}
-            current_user={@current_user}
-            current_path={@current_path}
-            collapsed={@collapsed}
-            searchable={@searchable}
-            class={@sidebar_class}
-          />
+            <Sidebar.render
+              sidebars={@active_sidebars}
+              current_user={@current_user}
+              current_path={@current_path}
+              collapsed={@collapsed}
+              searchable={@searchable}
+              class={@sidebar_class}
+            />
 
-          <main class="flex-1 min-w-0">
-            <%= render_slot(@inner_block) %>
-          </main>
+            <main class="flex-1 min-w-0">
+              <%= render_slot(@inner_block) %>
+            </main>
+          </div>
+
+          <%!-- Mobile: horizontal + drawer --%>
+          <div class="lg:hidden flex flex-col min-h-screen">
+            <Horizontal.render
+              sidebars={@sidebars}
+              current_user={@current_user}
+              current_path={@current_path}
+              class={@horizontal_class}
+              logo={@logo}
+            />
+
+            <main class="flex-1">
+              <%= render_slot(@inner_block) %>
+            </main>
+          </div>
         </div>
       </template>
 

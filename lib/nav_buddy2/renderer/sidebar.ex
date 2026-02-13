@@ -19,8 +19,6 @@ defmodule NavBuddy2.Renderer.Sidebar do
   alias NavBuddy2.{Resolver, Icon, Active}
 
 
-
-
   attr(:sidebars, :list,
     required: true,
     doc: "List of sidebar structs (usually filtered to active)"
@@ -109,9 +107,9 @@ defmodule NavBuddy2.Renderer.Sidebar do
     """
   end
 
-  # ---------------------------------------------------------------------------
+
   # Search
-  # ---------------------------------------------------------------------------
+
 
   defp search_input(assigns) do
     ~H"""
@@ -138,9 +136,9 @@ defmodule NavBuddy2.Renderer.Sidebar do
     """
   end
 
-  # ---------------------------------------------------------------------------
+
   # Section (Level 2)
-  # ---------------------------------------------------------------------------
+
 
   attr(:section, :any, required: true)
   attr(:section_idx, :integer, required: true)
@@ -182,9 +180,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
     """
   end
 
-  # ---------------------------------------------------------------------------
   # Nav Item (Level 3) - Uses client-side active tracking
-  # ---------------------------------------------------------------------------
 
   attr(:item, :any, required: true)
   attr(:item_key, :string, required: true)
@@ -338,9 +334,9 @@ defmodule NavBuddy2.Renderer.Sidebar do
     """
   end
 
-  # ---------------------------------------------------------------------------
+
   # Child Item (deepest level) - Uses server-side active tracking
-  # ---------------------------------------------------------------------------
+
 
   attr(:child, :any, required: true)
   attr(:current_path, :string, required: true)

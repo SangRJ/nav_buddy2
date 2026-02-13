@@ -28,7 +28,7 @@ defmodule NavBuddy2.Renderer.Horizontal do
 
     ~H"""
     <nav
-      class={["navbar bg-base-100 border-b border-base-300 px-4 gap-2", @class]}
+      class={["navbar bg-base-100/90 backdrop-blur border-b border-base-300 px-4 gap-2 sticky top-0 z-40", @class]}
       x-data="{ openDropdown: null }"
       x-on:click.outside="openDropdown = null"
     >

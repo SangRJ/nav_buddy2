@@ -96,24 +96,29 @@ defmodule NavBuddy2.Renderer.Horizontal do
       <%!-- Right side --%>
       <div class="navbar-end gap-2">
         <%!-- Search trigger --%>
-        <button
-          type="button"
-          class="btn btn-ghost btn-sm btn-square"
-          x-data
-          x-on:click="$dispatch('nav-buddy2:open-command-palette')"
-        >
-          <Icon.icon name={:search} class="w-4 h-4" />
-        </button>
+        <%!-- Search trigger --%>
+        <div class="tooltip tooltip-bottom" data-tip="Search">
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm btn-square"
+            x-data
+            x-on:click="$dispatch('nav-buddy2:open-command-palette')"
+          >
+            <Icon.icon name={:magnifying_glass} class="w-4 h-4" />
+          </button>
+        </div>
 
         <%!-- Mobile menu trigger --%>
-        <button
-          type="button"
-          class="btn btn-ghost btn-sm btn-square lg:hidden"
-          x-data
-          x-on:click="$dispatch('nav-buddy2:toggle-mobile-drawer', {})"
-        >
-          <Icon.icon name={:menu} class="w-5 h-5" />
-        </button>
+        <div class="tooltip tooltip-bottom lg:hidden" data-tip="Menu">
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm btn-square"
+            x-data
+            x-on:click="$dispatch('nav-buddy2:toggle-mobile-drawer', {})"
+          >
+            <Icon.icon name={:bars_3} class="w-5 h-5" />
+          </button>
+        </div>
 
         <%!-- User avatar --%>
         <div class="w-8 h-8 rounded-full bg-base-300 flex items-center justify-center">

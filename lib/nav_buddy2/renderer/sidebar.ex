@@ -124,7 +124,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
       x-transition:leave-end="opacity-0"
     >
       <label class="input input-sm input-bordered flex items-center gap-2 bg-base-200">
-        <Icon.icon name={:search} class="w-4 h-4 opacity-50" />
+        <Icon.icon name={:magnifying_glass} class="w-4 h-4 opacity-50" />
         <input
           type="text"
           placeholder="Search..."

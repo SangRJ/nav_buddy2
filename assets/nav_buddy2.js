@@ -68,16 +68,44 @@ function isPathActive(itemPath, currentPath, exact = false) {
  */
 export default function NavBuddy2Plugin(Alpine) {
   // ---------------------------------------------------------------------------
+  // Inject NavBuddy2 animations CSS
+  // ---------------------------------------------------------------------------
+  if (!document.getElementById('nb2-animations')) {
+    const style = document.createElement('style');
+    style.id = 'nb2-animations';
+    style.textContent = `
+      @keyframes nb2-wiggle {
+        0%, 100% { transform: rotate(0deg); }
+        20% { transform: rotate(-12deg); }
+        40% { transform: rotate(10deg); }
+        60% { transform: rotate(-6deg); }
+        80% { transform: rotate(4deg); }
+      }
+      .nb2-wiggle:hover {
+        animation: nb2-wiggle 0.5s ease-in-out;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // ---------------------------------------------------------------------------
   // Navigation store – tracks current path client-side (no re-renders!)
   // ---------------------------------------------------------------------------
   Alpine.store("nav", {
     layout: Alpine.$persist ? Alpine.$persist("sidebar").as("nav_buddy2_layout") : "sidebar", // Default state
     currentPath: window.location.pathname,
     activeSidebarId: null,
+    sidebarCollapsed: true, // Default collapsed — only icon rail visible initially
 
     init() {
       if (!Alpine.$persist) {
         console.warn("NavBuddy2: Alpine.$persist not loaded. Layout preference will not persist.");
+      }
+
+      // Restore collapsed state from localStorage
+      const prefs = getPreferences();
+      if (prefs.sidebarCollapsed !== undefined) {
+        this.sidebarCollapsed = prefs.sidebarCollapsed;
       }
 
       console.log("NavBuddy2: Initialized. Layout:", this.layout);
@@ -93,6 +121,11 @@ export default function NavBuddy2Plugin(Alpine) {
             })
           );
         }
+      });
+
+      // Persist collapsed state changes
+      Alpine.effect(() => {
+        setPreference("sidebarCollapsed", this.sidebarCollapsed);
       });
     },
     

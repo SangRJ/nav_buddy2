@@ -36,7 +36,7 @@ defmodule NavBuddy2.Nav do
   use Phoenix.Component
 
   alias NavBuddy2.Renderer.{IconRail, Sidebar, Horizontal, MobileDrawer, CommandPalette}
-  alias NavBuddy2.Active
+  alias NavBuddy2.{Active, Icon}
 
   attr(:sidebars, :list, required: true, doc: "List of NavBuddy2.Sidebar structs")
   attr(:current_user, :any, required: true, doc: "Current user (passed to permission resolver)")
@@ -85,7 +85,7 @@ defmodule NavBuddy2.Nav do
       <template x-if="$store.nav.layout === 'sidebar'">
         <div>
           <%!-- Desktop: sidebar layout --%>
-          <div class="hidden lg:flex min-h-screen">
+          <div class="hidden lg:flex min-h-screen overflow-x-hidden">
             <IconRail.render
               sidebars={@sidebars}
               current_user={@current_user}
@@ -104,8 +104,15 @@ defmodule NavBuddy2.Nav do
               class={@sidebar_class}
             />
 
-            <main class="flex-1 min-w-0">
-              <%= render_slot(@inner_block) %>
+            <main class="flex-1 min-w-0 flex flex-col">
+              <.page_header
+                sidebars={@sidebars}
+                current_path={@current_path}
+                current_user={@current_user}
+              />
+              <div class="flex-1">
+                <%= render_slot(@inner_block) %>
+              </div>
             </main>
           </div>
 
@@ -166,8 +173,15 @@ defmodule NavBuddy2.Nav do
               class={@sidebar_class}
             />
 
-            <main class="flex-1 min-w-0">
-              <%= render_slot(@inner_block) %>
+            <main class="flex-1 min-w-0 flex flex-col">
+              <.page_header
+                sidebars={@sidebars}
+                current_path={@current_path}
+                current_user={@current_user}
+              />
+              <div class="flex-1">
+                <%= render_slot(@inner_block) %>
+              </div>
             </main>
           </div>
 
@@ -284,6 +298,75 @@ defmodule NavBuddy2.Nav do
     </div>
     """
   end
+
+  # Sticky page header — shows current page title
+
+  attr(:sidebars, :list, required: true)
+  attr(:current_path, :string, required: true)
+  attr(:current_user, :any, required: true)
+
+  defp page_header(assigns) do
+    active_info = Active.find_active_item(assigns.sidebars, assigns.current_path)
+
+    {sidebar_title, page_title} =
+      case active_info do
+        {s, p} -> {s, p}
+        nil -> {nil, nil}
+      end
+
+    assigns =
+      assigns
+      |> assign(:sidebar_title, sidebar_title)
+      |> assign(:page_title, page_title)
+
+    ~H"""
+    <div
+      class="sticky top-0 z-30 bg-base-100/80 backdrop-blur border-b border-base-300 px-6 py-3 shrink-0"
+      x-data
+    >
+      <div class="flex items-center gap-3 min-h-[1.75rem]">
+        <%!-- Sidebar toggle arrow --%>
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm btn-square shrink-0"
+          @click="$store.nav.sidebarCollapsed = !$store.nav.sidebarCollapsed"
+          x-bind:title="$store.nav.sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        >
+          <span
+            class="block transition-transform duration-300"
+            x-bind:class="$store.nav.sidebarCollapsed ? 'rotate-180' : ''"
+            style="transition-timing-function: cubic-bezier(0.25, 1.1, 0.4, 1)"
+          >
+            <Icon.icon name={:chevron_left} class="w-4 h-4" />
+          </span>
+        </button>
+
+        <%!-- Breadcrumb / page title --%>
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+          <%= if @sidebar_title && @page_title do %>
+            <span class="text-sm text-base-content/50"><%= @sidebar_title %></span>
+            <Icon.icon name={:chevron_right} class="w-3 h-3 text-base-content/30" />
+            <h1 class="text-sm font-semibold text-base-content truncate"><%= @page_title %></h1>
+          <% else %>
+            <h1 class="text-sm font-semibold text-base-content/50">Navigation</h1>
+          <% end %>
+        </div>
+
+        <%!-- Search / Command palette trigger --%>
+        <div class="tooltip tooltip-bottom" data-tip="Search (⌘K)">
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm btn-square"
+            @click="window.dispatchEvent(new CustomEvent('nav-buddy2:open-command-palette'))"
+          >
+            <Icon.icon name={:magnifying_glass} class="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
   defp find_active_sidebar_id(sidebars, current_path) do
     Enum.find_value(sidebars, fn sidebar ->
       if Active.sidebar_active?(sidebar, current_path), do: sidebar.id

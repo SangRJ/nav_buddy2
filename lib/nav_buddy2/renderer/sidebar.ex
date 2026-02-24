@@ -18,14 +18,18 @@ defmodule NavBuddy2.Renderer.Sidebar do
 
   alias NavBuddy2.{Resolver, Icon, Active}
 
-
   attr(:sidebars, :list,
     required: true,
     doc: "List of sidebar structs (usually filtered to active)"
   )
 
   attr(:current_user, :any, required: true, doc: "Current user for permission filtering")
-  attr(:current_path, :string, required: true, doc: "Current route path (used for initial render only)")
+
+  attr(:current_path, :string,
+    required: true,
+    doc: "Current route path (used for initial render only)"
+  )
+
   attr(:collapsed, :boolean, default: false, doc: "Initial collapsed state")
   attr(:searchable, :boolean, default: true, doc: "Show search input")
   attr(:class, :string, default: "", doc: "Additional CSS classes")
@@ -39,51 +43,31 @@ defmodule NavBuddy2.Renderer.Sidebar do
 
     ~H"""
     <aside
-      x-data={"{
-        collapsed: #{@collapsed},
+      x-data="{
         search: '',
         expanded: new Set()
-      }"}
-      x-init="$watch('collapsed', val => $dispatch('nav-buddy2:sidebar-collapsed', { collapsed: val }))"
+      }"
+      x-show="!$store.nav.sidebarCollapsed"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0 -translate-x-full"
+      x-transition:enter-end="opacity-100 translate-x-0"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100 translate-x-0"
+      x-transition:leave-end="opacity-0 -translate-x-full"
       class={[
-        "bg-base-100 border-r border-base-300 flex flex-col shrink-0 overflow-hidden sticky top-0 h-screen rounded-r-2xl",
+        "w-60 bg-base-100 border-r border-base-300 flex flex-col shrink-0 overflow-hidden sticky top-0 h-screen",
         @class
       ]}
-      x-bind:class="collapsed ? 'w-16' : 'w-72'"
-      style="transition: width 500ms cubic-bezier(0.25, 1.1, 0.4, 1)"
+      style="transition-timing-function: cubic-bezier(0.25, 1.1, 0.4, 1)"
     >
       <%= for sidebar <- @sidebars do %>
-        <%!-- Header with title and collapse toggle --%>
-        <div class="flex items-center justify-between px-2 pt-4 pb-2 shrink-0">
-          <div
-            x-show="!collapsed"
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 -translate-x-2"
-            x-transition:enter-end="opacity-100 translate-x-0"
-            x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0"
-            class="px-2"
-          >
+        <%!-- Header with title --%>
+        <div class="flex items-center px-2 pt-4 pb-2 shrink-0">
+          <div class="px-2">
             <h2 class="text-lg font-semibold text-base-content truncate">
               <%= sidebar.title %>
             </h2>
           </div>
-
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm btn-square shrink-0"
-            x-on:click="collapsed = !collapsed"
-            x-bind:title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-          >
-            <span
-              class="transition-transform duration-300"
-              x-bind:class="collapsed ? 'rotate-180' : ''"
-              style="transition-timing-function: cubic-bezier(0.25, 1.1, 0.4, 1)"
-            >
-              <Icon.icon name={:chevron_left} class="w-4 h-4" />
-            </span>
-          </button>
         </div>
 
         <%!-- Search --%>
@@ -107,22 +91,11 @@ defmodule NavBuddy2.Renderer.Sidebar do
     """
   end
 
-
   # Search
-
 
   defp search_input(assigns) do
     ~H"""
-    <div
-      class="px-2 pb-2 shrink-0"
-      x-show="!collapsed"
-      x-transition:enter="transition ease-out duration-200 delay-75"
-      x-transition:enter-start="opacity-0"
-      x-transition:enter-end="opacity-100"
-      x-transition:leave="transition ease-in duration-100"
-      x-transition:leave-start="opacity-100"
-      x-transition:leave-end="opacity-0"
-    >
+    <div class="px-2 pb-2 shrink-0">
       <label class="input input-sm input-bordered flex items-center gap-2 bg-base-200">
         <Icon.icon name={:magnifying_glass} class="w-4 h-4 opacity-50" />
         <input
@@ -136,9 +109,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
     """
   end
 
-
   # Section (Level 2)
-
 
   attr(:section, :any, required: true)
   attr(:section_idx, :integer, required: true)
@@ -150,16 +121,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
     <div class="pt-2">
       <%!-- Section title --%>
       <%= if @section.title do %>
-        <div
-          x-show="!collapsed"
-          x-transition:enter="transition ease-out duration-200"
-          x-transition:enter-start="opacity-0"
-          x-transition:enter-end="opacity-100"
-          x-transition:leave="transition ease-in duration-100"
-          x-transition:leave-start="opacity-100"
-          x-transition:leave-end="opacity-0"
-          class="px-3 py-2"
-        >
+        <div class="px-3 py-2">
           <span class="text-xs font-medium uppercase tracking-wider text-base-content/50">
             <%= @section.title %>
           </span>
@@ -214,13 +176,9 @@ defmodule NavBuddy2.Renderer.Sidebar do
       <%!-- Parent item row --%>
       <div
         class={[
-          "group flex items-center gap-3 rounded-lg cursor-pointer select-none transition-all duration-300",
+          "group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer select-none transition-all duration-300",
           if(@active? || @child_active?, do: "bg-primary/10 text-primary", else: "text-base-content hover:bg-base-200")
         ]}
-        x-bind:class="{
-          'justify-center p-2': collapsed,
-          'px-3 py-2': !collapsed
-        }"
         style="transition-timing-function: cubic-bezier(0.25, 1.1, 0.4, 1)"
       >
         <%= if @item.to do %>
@@ -263,7 +221,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
       <%!-- Children --%>
       <%= if @has_children? do %>
         <div
-          x-show={"expanded.has('#{@item_key}') && !collapsed"}
+          x-show={"expanded.has('#{@item_key}')"}
           x-collapse
           class="ml-4 mt-0.5 space-y-0.5 border-l-2 border-base-300 pl-3"
         >
@@ -298,25 +256,13 @@ defmodule NavBuddy2.Renderer.Sidebar do
     <% end %>
 
     <%!-- Label --%>
-    <span
-      x-show="!collapsed"
-      x-transition:enter="transition ease-out duration-200"
-      x-transition:enter-start="opacity-0"
-      x-transition:enter-end="opacity-100"
-      x-transition:leave="transition ease-in duration-100"
-      x-transition:leave-start="opacity-100"
-      x-transition:leave-end="opacity-0"
-      class="flex-1 truncate text-sm"
-    >
+    <span class="flex-1 truncate text-sm">
       <%= @item.label %>
     </span>
 
     <%!-- Badge --%>
     <%= if @item.badge do %>
-      <span
-        x-show="!collapsed"
-        class={["badge badge-sm", @item.badge_class || "badge-ghost"]}
-      >
+      <span class={["badge badge-sm", @item.badge_class || "badge-ghost"]}>
         <%= @item.badge %>
       </span>
     <% end %>
@@ -324,7 +270,6 @@ defmodule NavBuddy2.Renderer.Sidebar do
     <%!-- Chevron for items with children --%>
     <%= if @has_children? do %>
       <span
-        x-show="!collapsed"
         class="shrink-0 transition-transform duration-200"
         x-bind:class={"expanded.has('#{@item_key}') ? 'rotate-180' : ''"}
       >
@@ -334,9 +279,7 @@ defmodule NavBuddy2.Renderer.Sidebar do
     """
   end
 
-
   # Child Item (deepest level) - Uses server-side active tracking
-
 
   attr(:child, :any, required: true)
   attr(:current_path, :string, required: true)
